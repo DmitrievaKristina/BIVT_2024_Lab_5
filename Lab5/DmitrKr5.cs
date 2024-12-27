@@ -198,17 +198,17 @@ public class Program
         // code here
         if (C == null || B == null || C.GetLength(0) != 5 || C.GetLength(1) != 6 || B.GetLength(0) != 4 || B.GetLength(1) != 5) return;
         int index_rowB = CountRowPositive(B), index_colC = CountColumnPositive(C), n = B.GetLength(0), m = B.GetLength(1);
-        if (index_rowB == 0 || index_colC == -1) return;
+        if (index_rowB == -1 || index_colC == -1) return;
         int[,] B_new = new int[n + 1, m];
         for(int i = 0; i < n + 1; i++)
             for (int j = 0; j < m; j++)
             {
-                if (i < index_rowB)
+                if (i < index_rowB+1)
                     B_new[i, j] = B[i, j];
-                else if (i > index_rowB) 
+                else if (i > index_rowB+1) 
                     B_new[i, j] = B[i-1, j];
                 else
-                    B_new[index_rowB, j] = C[j, index_colC];
+                    B_new[index_rowB+1, j] = C[j, index_colC];
             }
         B = B_new;
         // create and use CountRowPositive(matrix, rowIndex);
@@ -229,7 +229,7 @@ public class Program
                     rowIndex = i;
                 }
             }
-            return rowIndex + 1;   
+            return rowIndex;   
         }
     public int CountColumnPositive(int[,] matrix)
         {
@@ -849,47 +849,47 @@ public class Program
         // end
     }
     public void Task_3_7(ref int[,] B, int[,] C)
+{
+    // code here
+    B = InsertColumn(B, CountRowPositive, C, CountColumnPositive);
+    // create and use public delegate CountPositive(matrix, index);
+    // use CountRowPositive(matrix, rowIndex) from Task_2_7
+    // use CountColumnPositive(matrix, colIndex) from Task_2_7
+    // create and use method InsertColumn(matrixB, CountRow, matrixC, CountColumn);
+    // end
+}
+public delegate int CountPositive(int [,] matrix);
+public int[,] InsertColumn(int[,] matrixB, CountPositive CountRow, int[,] matrixC, CountPositive CountColumn)
+{
+    int n = matrixB.GetLength(0), m = matrixB.GetLength(1), i_max_B = 0, j_max_C = 0;
+    int max_B = -1, max_C = -1;
+    for (int i = 0; i < n; i++)
     {
-        // code here
-        B = InsertColumn(B, CountRowPositive(), C, CountColumnPositive);
-        // create and use public delegate CountPositive(matrix, index);
-        // use CountRowPositive(matrix, rowIndex) from Task_2_7
-        // use CountColumnPositive(matrix, colIndex) from Task_2_7
-        // create and use method InsertColumn(matrixB, CountRow, matrixC, CountColumn);
-        // end
-    }
-    public delegate int CountPositive(int [,] matrix, int index);
-    public int[,] InsertColumn(int[,] matrixB, CountPositive CountRow, int[,] matrixC, CountPositive CountColumn)
-    {
-        int n = matrixB.GetLength(0), m = matrixB.GetLength(1), i_max_B = 0, j_max_C = 0;
-        int max_B = -1, max_C = -1;
-        for (int i = 0; i < n; i++)
+        if (CountRow(matrixB) > max_B)
         {
-            if (CountRow(matrixB, i) > max_B)
-            {
-                max_B = CountRow(matrixB, i);
-                i_max_B = i;
-            }
-            if (CountColumn(matrixC, i) > max_C)
-            {
-                max_C = CountColumn(matrixC, i);
-                j_max_C = i;
-            }
+            max_B = CountRow(matrixB);
+            i_max_B = i;
         }
-        int[,] matrix_new = new int[n + 1, m];
-        for (int i = 0; i < m; ++i)
-            matrix_new[i_max_B + 1, i] = matrixC[i, j_max_C];
-        
-        for (int i = 0; i <= i_max_B; ++i)
-            for (int j = 0; j < m; ++j)
-                matrix_new[i, j] = matrixB[i, j];
-        
-        for (int i = i_max_B + 2; i < n + 1; ++i)
-            for (int j = 0; j < m; ++j)
-                matrix_new[i, j] = matrixB[i - 1, j];
-        
-        return matrix_new;
+        if (CountColumn(matrixC) > max_C)
+        {
+            max_C = CountColumn(matrixC);
+            j_max_C = i;
+        }
     }
+    int[,] matrix_new = new int[n + 1, m];
+    for (int i = 0; i < m; ++i)
+        matrix_new[i_max_B + 1, i] = matrixC[i, j_max_C];
+    
+    for (int i = 0; i <= i_max_B; ++i)
+        for (int j = 0; j < m; ++j)
+            matrix_new[i, j] = matrixB[i, j];
+    
+    for (int i = i_max_B + 2; i < n + 1; ++i)
+        for (int j = 0; j < m; ++j)
+            matrix_new[i, j] = matrixB[i - 1, j];
+    
+    return matrix_new;
+}
     public void Task_3_10(ref int[,] matrix)
     {
         // FindIndex searchArea = default(FindIndex); - uncomment me
@@ -904,6 +904,7 @@ public class Program
     public void Task_3_13(ref int[,] matrix)
     {
         // code here
+        matrix = RemoveRows(matrix, FindMaxIndex, FindMinIndex);
         // use public delegate FindElementDelegate(matrix) from Task_3_6
         // create and use method RemoveRows(matrix, findMax, findMin)
         // end
@@ -911,35 +912,29 @@ public class Program
     public delegate void FindElementDelegate(int[,] matrix, out int index_i, out int index_j);
     public void FindMinIndex(int[,] matrix, out int index_i, out int index_j)
     {
-        index_i = 0; index_j = 0;
+        index_i = 0; index_j = 0; int min = int.MaxValue;
         for (int i = 0; i < matrix.GetLength(0); i++)
             for (int j = 0; j < matrix.GetLength(1); j++)
-                if (matrix[i, j] < matrix[index_i, index_j])
+                if (matrix[i, j] < min)
                 {
                     index_i = i;
                     index_j = j;
+                    min = matrix[i, j];
                 }
     }
-    public void RemoveRows(ref int[,] matrix, FindElementDelegate findMax, FindElementDelegate findMin)
+    public int[,] RemoveRows(int[,] matrix, FindElementDelegate findMax, FindElementDelegate findMin)
     {
-        int maxI, maxJ, minI, minJ;
-        findMax(matrix, out maxI, out maxJ);
-        findMin(matrix, out minI, out minJ);
+        findMax(matrix, out int i_max, out int j_max);
+        findMin(matrix, out int i_min, out int j_min);
 
-        if (minI < maxI)
-        {
-            RemoveRow(matrix, maxI);
-            RemoveRow(matrix, minI);
-        }
-        else if (minI > maxI)
-        {
-            RemoveRow(matrix, minI);
-            RemoveRow(matrix, maxI);
-        }
+        if (i_min == i_max)
+            matrix = RemoveRow(matrix, i_max);
         else
         {
-            RemoveRow(matrix, minI);
+            matrix = RemoveRow(matrix, i_min);
+            matrix = RemoveRow(matrix, i_max);
         }
+        return matrix;
     }
     public void Task_3_22(int[,] matrix, out int[] rows, out int[] cols)
     {
@@ -953,14 +948,28 @@ public class Program
         // end
     }
     public void Task_3_27(int[,] A, int[,] B)
-    {
-        // code here
-        // create and use public delegate ReplaceMaxElement(matrix, rowIndex, max);
-        // use ReplaceMaxElementOdd(matrix) from Task_2_27
-        // use ReplaceMaxElementEven(matrix) from Task_2_27
-        // create and use method EvenOddRowsTransform(matrix, replaceMaxElementOdd, replaceMaxElementEven);
-        // end
-    }
+{
+    // code here
+    // create and use public delegate ReplaceMaxElement(matrix, rowIndex, max);
+    // use ReplaceMaxElementOdd(matrix) from Task_2_27
+    // use ReplaceMaxElementEven(matrix) from Task_2_27
+    // create and use method EvenOddRowsTransform(matrix, replaceMaxElementOdd, replaceMaxElementEven);
+
+    ReplaceMaxElement ReplaceMaxOdd = ReplaceMaxElementOdd, ReplaceMaxEven = ReplaceMaxElementEven;
+
+    EvenOddRowsTransform(ref A, ReplaceMaxOdd, ReplaceMaxEven);
+    EvenOddRowsTransform(ref B, ReplaceMaxOdd, ReplaceMaxEven);
+
+    // end
+}
+
+public void EvenOddRowsTransform(ref int[,] matrix, ReplaceMaxElement ReplaceMaxOdd, ReplaceMaxElement ReplaceMaxEven)
+{        
+    matrix = ReplaceMaxElementEven(matrix); matrix = ReplaceMaxElementOdd(matrix);
+}
+
+public delegate int[,] ReplaceMaxElement(int[,] matrix);
+
     public void Task_3_28a(int[] first, int[] second, ref int answerFirst, ref int answerSecond)
     {
         // code here
